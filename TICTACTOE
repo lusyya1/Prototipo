@@ -1,5 +1,25 @@
 #include <iostream>
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+#include <vector>
+#include <string>
+#include <limits> 
+
+using namespace std; 
+
+// El tablero se representa con un array de 9 caracteres.
+char tablero[9] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+char jugador_actual = 'X';
+
+// Muestra el estado actual del tablero en la consola.
+ 
+void dibujarTablero() {
+    cout << "\n======================================" << endl;
+    cout << "  Tic-Tac-Toe (El Gato) para 2 JUGADORES" << endl;
+    cout << "======================================" << endl;
+
+    cout << "\n  " << tablero[0] << " | " << tablero[1] << " | " << tablero[2] << endl;
+    cout << " ---|---|---" << endl;
+    cout << "  " << tablero[3] << " | " << tablero[4] << " | " << tablero[5] << endl;
+    cout << " ---|---|---" << endl;
+    cout << "  " << tablero[6] << " | " << tablero[7] << " | " << tablero[8] << endl;
+    cout << "\n======================================" << endl;
 }
