@@ -5,33 +5,235 @@
 
 using namespace std;
 
-// Tamaño del tablero 
+// El tamaño de nuestro tablero de Conecta 4
 const int FILAS = 6;
 const int COLUMNAS = 7;
-// Nombres de los jugadores
-const string P1 = "P1";
-const string P2 = "P2";
+// Nombres/Símbolos para los jugadores
+const string P1 = " X"; 
+const string P2 = " O"; 
+// Símbolo para casilla vacía
+const string VACIO = " ."; 
 
-// Esto se convertira en el tablero. Es una lista de listas (vector de vectores)
+// Esto es nuestro tablero. Es una lista de listas (vector de vectores)
 vector<vector<string>> tablero(FILAS, vector<string>(COLUMNAS)); 
-// Variable para saber de quién es el turno
+// Variable para decir que el primero en jugar el es el Jugador 1
 string jugador_actual = P1; 
-
-// ---------------------------------------------------------------------
 
 // Función para poner el tablero vacío
 void inicializarTablero() {
-    // Todas las filas
+    // Recorremos todas las filas
     for (int f = 0; f < FILAS; ++f) {
-        // Todas las columnas
+        // Recorremos todas las columnas
         for (int c = 0; c < COLUMNAS; ++c) {
-            // Espacios para crear una casilla vacía
-            tablero[f][c] = "  "; 
+            // Ponemos el símbolo de vacío
+            tablero[f][c] = VACIO; 
         }
     }
     // Siempre empieza el Jugador P1
     jugador_actual = P1; 
 }
 
+// Muestra el tablero en la pantalla
+void dibujarTablero() {
+    // Imprime la línea de arriba y el turno
+    cout << "\n========================================" << endl;
+    
+    // Mostramos el nombre del jugador para saber de quién es el turno
+    string nombre_jugador = (jugador_actual == P1) ? "1 (X)" : "2 (O)";
+    cout << " CONECTA 4 (Turno de: Jugador " << nombre_jugador << ")" << endl;
+    cout << "========================================" << endl;
+
+    cout << "    "; // Espacio para la etiqueta de Fila
+    
+    // Bucle para imprimir cada número de columna
+    for (int c = 0; c < COLUMNAS; ++c) {
+        // Ponemos espacios antes y después del número para que se vea centrado
+        if (c + 1 < 10) { // Si el número es de 1 dígito (1 a 9)
+            cout << "   " << c + 1 << "   "; 
+        } else {
+            // Si el número tuviera 2 dígitos (no es el caso)
+            cout << "  " << c + 1 << "   ";
+        }
+    }
+    cout << endl;
+
+    // 2. Imprimir cada fila del tablero
+    for (int f = 0; f < FILAS; ++f) {
+        // Imprime la línea horizontal de la cuadrícula
+        cout << "    +"; 
+        for (int c = 0; c < COLUMNAS; ++c) {
+            cout << "_____" << "+"; // separación de las celdas
+        }
+        cout << endl;
+        
+        // Imprime el contenido de la fila
+        cout << " F" << f + 1 << " |"; // Etiqueta de Fila (F1, F2, etc.)
+        for (int c = 0; c < COLUMNAS; ++c) {
+            string contenido = tablero[f][c];
+            
+            // Usamos " " + contenido + " " para centrarlo 
+            cout << " " << contenido << "  |"; 
+        }
+        cout << endl;
+    }
+    
+    // Imprimir la línea de abajo de la cuadrícula
+    cout << "    +"; 
+    for (int c = 0; c < COLUMNAS; ++c) {
+        cout << "_____" << "+";
+    }
+    cout << endl;
+}
+
+// Función para pedir la columna al jugador y poner la ficha
+bool manejarTurno() {
+    int col_eleccion;
+    
+    while (true) {
+        // Muestra qué ficha está jugando (X u O)
+        string ficha_actual = (jugador_actual == P1) ? "X" : "O";
+        cout << "\nJugador " << ficha_actual << ", ingresa el número de columna (1-" << COLUMNAS << "): ";
+
+        // Si el usuario no escribe un número
+        if (!(cin >> col_eleccion)) {
+            cout << "Entrada inválida. Por favor, ingresa un numero entero." << endl;
+            // Limpia el error 
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue; // Volver al inicio del bucle
+        }
+
+        // Restamos 1 porque la gente cuenta desde 1, pero las listas desde 0
+        int col_indice = col_eleccion - 1; 
+
+        // Revisar si el número de columna es válido 
+        if (col_indice < 0 || col_indice >= COLUMNAS) {
+            cout << "Número de columna fuera de rango. Ingresa un número entre 1 y " << COLUMNAS << "." << endl;
+            continue;
+        }
+
+        // 2. Buscar la posición más baja disponible en esa columna
+        // Empezamos desde la fila de abajo hacia arriba 
+        for (int f = FILAS - 1; f >= 0; --f) {
+            string contenido = tablero[f][col_indice];
+            
+            // Si la casilla está vacía...
+            if (contenido == VACIO) {
+                tablero[f][col_indice] = jugador_actual;   // Ponemos la ficha del jugador actual
+                return true; 
+            }
+        }
+
+        // Si el bucle termina sin encontrar sitio, es porque la columna está llena
+        cout << "La columna " << col_eleccion << " esta llena. Elige otra columna." << endl;
+    }
+}
+
+// Conocer ganador ganado 
+bool verificarGanador(const string& jugador) {
+    // revisa si hay 4 fichas en una dirección (horizontal, vertical o diagonal)
+    auto check_direction = [&](int df, int dc) {
+        // Recorre todas las casillas
+        for (int f = 0; f < FILAS; ++f) {
+            for (int c = 0; c < COLUMNAS; ++c) {
+                // Si encontramos una ficha del jugador
+                if (tablero[f][c] == jugador) {
+                    // Contar si hay 4 en esa dirección (df = cambio de fila, dc = cambio de columna)
+                    int count = 0;
+                    for (int k = 0; k < 4; ++k) {
+                        int nf = f + k * df; // Siguiente fila
+                        int nc = c + k * dc; // Siguiente columna
+
+                        // Revisar si la casilla existe y si es del mismo jugador
+                        if (nf >= 0 && nf < FILAS && nc >= 0 && nc < COLUMNAS && tablero[nf][nc] == jugador) {
+                            count++; 
+                        } else {
+                            break; 
+                        }
+                    }
+                    if (count == 4) return true; // Ganador
+                }
+            }
+        }
+        return false; // No hay 4 seguidas en esa dirección
+    };
+    
+    // Revisar todas las 4 direcciones posibles
+    if (check_direction(0, 1) || check_direction(1, 0) || check_direction(1, 1) || check_direction(1, -1)) {
+        return true; // Sí, alguna dirección encontró 4 seguidas
+    }
+
+    return false; // nadie ganó
+}
+
+// Función para ver si el tablero está lleno (empate)
+bool verificarEmpate() {
+    // Solo es necesario revisar la fila de arriba
+    for (int c = 0; c < COLUMNAS; ++c) {
+        // Si la casilla de arriba está vacía se puede seguir jugando
+        if (tablero[0][c] == VACIO) {
+            return false; // no es empate
+        }
+    }
+    return true; // es empate 
+}
+
+// Función para cambiar el turno al otro jugador
+void cambiarJugador() {
+jugador_actual = (jugador_actual == P1) ? P2 : P1;
+}
+
+
+// programa principal
+int main() {
+    char respuesta;
+    
+    cout << "Conecta 4 para 2 jugadores!" << endl;
+    
+    // Bucle principal para jugar varias veces
+    do {
+        // inicia tablero vacio
+        inicializarTablero(); 
+        bool juego_terminado = false;
+
+        // Bucle para un solo juego
+        while (!juego_terminado) {
+            dibujarTablero(); // actualiza el tablero
+            
+            // Si el jugador pudo poner una ficha
+            if (manejarTurno()) { 
+                
+                // Comprobar si hay ganador
+                if (verificarGanador(jugador_actual)) {
+                    dibujarTablero();
+                    string ficha_ganadora = (jugador_actual == P1) ? "X" : "O";
+                    cout << "\nFelicidades! El Jugador " << ficha_ganadora << " ha ganado la partida." << endl;
+                    juego_terminado = true;
+                }
+                
+                // comprobar si es un empate
+                else if (verificarEmpate()) {
+                    dibujarTablero();
+                    cout << "\nEs un empate! El tablero esta lleno." << endl;
+                    juego_terminado = true;
+                }
+                
+                // ninguno de los anteriores, cambia de turno
+                else {
+                    cambiarJugador();
+                }
+            }
+        }
+        
+        // --- REINICIAR LA PARTIDA ---
+        cout << "\nLes gustaria jugar de nuevo? (S/N): ";
+        cin >> respuesta;
+        // Limpiar la entrada de texto
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        
+    } while (toupper(respuesta) == 'S'); 
+
+    cout << "\nGracias por jugar! :D" << endl;
+    
     return 0;
 }
