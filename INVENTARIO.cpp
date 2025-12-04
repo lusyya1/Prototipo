@@ -1,12 +1,13 @@
 #include <iostream>
 #include <string>
 #include <limits> // sirve para limpiar cuando el cin se vuelve loco
+#include <iomanip> // AGREGUÉ ESTA: Sirve para usar setw y acomodar la tabla bonita
 
 using namespace std;
 
 /* --------------------------------------------------------------------------------
    TIPO DE DATO (STRUCT)  
-    definí una estructura llamada "Producto" para guardar los datos de cada uno de los producto.
+   definí una estructura llamada "Producto" para guardar los datos de cada uno de los producto.
    objetivo: agrupar varios datos en uno solo.
 -----------------------------------------------------------------------------------*/ 
 struct Producto { 
@@ -37,20 +38,31 @@ Producto inventario[TOTAL] = {
 /* --------------------------------------------------------------------------------
    FUNCIONES
 -----------------------------------------------------------------------------------*/ 
-void mostrarInventario() { // Esta función solo imprime la lista.
+void mostrarInventario() { 
     cout << "\n--- LISTA DE PRODUCTOS ---\n";
-    cout << "ID\tNombre\t\tPrecio\tCantidad\n"; 
-    cout << "------------------------------------------\n";
+    
+    // Aquí uso 'left' para alinear a la izquierda y 'setw' para dar un ancho fijo a cada columna.
+    // Es como dibujar casillas invisibles.
+    cout << left; // Todo lo que imprima a partir de aqui se alinea a la izquierda
+    cout << setw(10) << "ID" 
+         << setw(20) << "Nombre" 
+         << setw(15) << "Precio" 
+         << setw(10) << "Cantidad" << endl;
+         
+    cout << "--------------------------------------------------------\n";
     
     // Recorro todo el arreglo uno por uno
     for(int i = 0; i < TOTAL; i++) {
-        // Accedo a los datos usando el punto (.) porque aquí NO son punteros
-            cout << inventario[i].id << "\t"  // Uso el \t (tabulador) para que se vea mas bonito
-             << inventario[i].nombre << "\t\t$" 
-             << inventario[i].precio << "\t" 
-             << inventario[i].cantidad << "\n";
+        cout << left; // Aseguro que se mantenga la alineación
+        
+        cout << setw(10) << inventario[i].id 
+             << setw(20) << inventario[i].nombre;
+             
+        // Para el precio le agrego el signo de pesos manual antes del numero
+        cout << "$" << setw(14) << inventario[i].precio 
+             << setw(10) << inventario[i].cantidad << "\n";
     }
-    cout << "------------------------------------------\n";
+    cout << "--------------------------------------------------------\n";
 }
 
 // -- PUNTEROS --
@@ -70,6 +82,69 @@ void modificarStock(Producto* prod) {
     prod->cantidad = nuevaCantidad; 
     cout << "¡Stock actualizado!\n";
 }
+
+/* --------------------------------------------------------------------------------
+   BÚSQUEDA Y ORDENAMIENTO
+-----------------------------------------------------------------------------------*/ 
+
+// -- BÚSQUEDA --
+// Esta función busca un ID. 
+// Devuelve un PUNTERO (Producto*) para saber dónde está en memoria.
+Producto* buscarPorID(int idBuscado) {
+    for(int i = 0; i < TOTAL; i++) {
+        // Comparo si el ID actual es el que busco
+        if(inventario[i].id == idBuscado) {
+            // Si lo encuentro, uso '&' para devolver su DIRECCIÓN de memoria
+            return &inventario[i];
+        }
+    }
+    
+    // Si llegué aquí es que recorrí todo y no lo encontré.
+    // Lanzo un error manual con 'throw'.
+    throw "Error 404: Ese ID no existe, checalo bien.";
+}
+
+// -- ORDENAMIENTO POR PRECIO (BURBUJA) --
+// Método de la Burbuja: compara parejitas y si están mal, las cambia.
+void ordenarPorPrecio() {
+    cout << "\nOrdenando por precio (del mas barato al mas caro)...\n";
+    
+    Producto temporal; 
+
+    for(int i = 0; i < TOTAL - 1; i++) {
+        for(int j = 0; j < TOTAL - 1; j++) {
+            // Si el precio de hoy es mayor al de mañana... los cambio
+            if(inventario[j].precio > inventario[j+1].precio) {
+                // Intercambio (Swap)
+                temporal = inventario[j];
+                inventario[j] = inventario[j+1];
+                inventario[j+1] = temporal;
+            }
+        }
+    }
+    cout << "Ya quedo ordenado por precio.\n";
+    mostrarInventario(); 
+}
+
+// -- ORDENAMIENTO POR CANTIDAD --
+void ordenarPorCantidad() {
+    cout << "\nOrdenando por cantidad (de menor a mayor stock)...\n";
+    Producto temporal;
+
+    for(int i = 0; i < TOTAL - 1; i++) {
+        for(int j = 0; j < TOTAL - 1; j++) {
+            // Aquí la condición es sobre stock (cantidad)
+            if(inventario[j].cantidad > inventario[j+1].cantidad) {
+                temporal = inventario[j];
+                inventario[j] = inventario[j+1];
+                inventario[j+1] = temporal;
+            }
+        }
+    }
+    cout << "Ya quedo ordenado por stock.\n";
+    mostrarInventario();
+}
+
 
 // -- MAIN --
 int main() {
@@ -144,3 +219,4 @@ int main() {
     } while(opcion != 5);
 
     return 0;
+}
